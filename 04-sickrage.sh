@@ -23,6 +23,9 @@ apt-get install -y unrar-free git-core openssl libssl-dev python2.7
 #######################
 git clone https://github.com/SickRage/SickRage.git /opt/sickrage/
 
+# Run SickRage for the first time to create default config files
+timeout 5s python /opt/sickrage/SickBeard.py
+
 #######################
 # Configure
 #######################
@@ -64,6 +67,37 @@ sed -i "s/^nzbToSickBeard.py:sbpassword=.*/nzbToSickBeard.py:sbpassword=$passwd/
 sed -i "s|^nzbToSickBeard.py:sbwatch_dir=.*|nzbToSickBeard.py:sbwatch_dir=/home/$username/nzbget/completed/tv|g" /opt/nzbget/nzbget.conf
 
 #######################
+# Structure
+#######################
+# Create our local directory
+mkdir -p /home/$username/$local/tv
+
+# Create our ACD directory
+## Run the commands as our user since the rclone config is stored in the user's home directory and root can't access it.
+su $username <<EOF
+cd /home/$username
+rclone mkdir $encrypted:tv
+EOF
+
+# Create our Plex library
+# Must be done manually for now
+echo ''
+echo ''
+echo 'Now you need to create your Plex TV Library.'
+echo '1) In a browser open https://app.plex.tv/web/app'
+echo '2) In the left hand side, click on "Add Library"'
+echo '3) Select "TV Shows", leave the default name, and choose your preferred language before clicking "Next"'
+echo "4) Click 'Browse for media folder' and navigate to /home/$username/$encrypted/tv"
+echo '5) Click on the "Add" button and then click on "Add library"'
+echo ''
+
+# Create a Plex Token
+token=$(curl -H "Content-Length: 0" -H "X-Plex-Client-Identifier: PlexInTheCloud" -u "${plexUsername}":"${plexPassword}" -X POST https://my.plexapp.com/users/sign_in.xml | cut -d "\"" -s -f22 | tr -d '\n')
+
+# Grab the Plex Section ID of our new library
+tvID=$(curl -H "X-Plex-Token: ${token}" http://127.0.0.1:32400/library/sections | grep "show" | grep "title=" | awk -F = '{print $6" "$7" "$8}' | sed 's/ art//g' | sed 's/title//g' | sed 's/type//g' | awk -F \" '{print "Section=\""$6"\" ID="$2}' | cut -d '"' -f2)
+
+#######################
 # Helper Scripts
 #######################
 tee "/home/$username/nzbget/scripts/uploadTV.sh" > /dev/null <<EOF
@@ -81,7 +115,7 @@ sleep 10s
 rclone move -c /home/$username/$local/tv $encrypted:tv
 
 # Tell Plex to update the Library
-#wget http://localhost:32400/library/sections/2/refresh?X-Plex-Token=$plexToken
+wget http://localhost:32400/library/sections/$tvID/refresh?X-Plex-Token=$token
 
 # Send PP Success code
 exit 93
@@ -110,6 +144,7 @@ EOF
 #######################
 # Permissions
 #######################
+chown -R $username:$username /home/$username/$local/tv
 chown -R $username:$username /opt/sickrage
 chmod +x /home/$username/nzbget/scripts/uploadTV.sh
 chown root:root /etc/systemd/system/sickrage.service
