@@ -38,6 +38,10 @@ sed -i "s/^web_password =.*/web_password = $passwd/g" /opt/sickrage/config.ini
 
 sed -i "s/^nzbget_username =.*/nzbget_username = $username/g" /opt/sickrage/config.ini
 sed -i "s/^nzbget_password =.*/nzbget_password = $passwd/g" /opt/sickrage/config.ini
+sed -i "s/^nzbget_host =.*/nzbget_host = localhost:6789/g" /opt/sickrage/config.ini
+
+sed -i "s/^use_nzbs =.*/use_nzbs = 1/g" /opt/sickrage/config.ini
+sed -i "s/^nzb_method =.*/nzb_method = nzbget/g" /opt/sickrage/config.ini
 
 sed -i "s/^opensubtitles_password =.*/opensubtitles_password = $openSubtitlesPassword/g" /opt/sickrage/config.ini
 sed -i "s/^opensubtitles_username =.*/opensubtitles_username = $openSubtitlesUsername/g" /opt/sickrage/config.ini
@@ -71,6 +75,9 @@ sed -i "s|^nzbToSickBeard.py:sbwatch_dir=.*|nzbToSickBeard.py:sbwatch_dir=/home/
 #######################
 # Create our local directory
 mkdir -p /home/$username/$local/tv
+
+# Create our directory for completed downloads
+mkdir -p /home/$username/nzbget/completed/tv
 
 # Create our ACD directory
 ## Run the commands as our user since the rclone config is stored in the user's home directory and root can't access it.
