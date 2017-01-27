@@ -61,6 +61,7 @@ sed 's/\(^[[:alpha:]]\)/# \1/' /etc/fail2ban/fail2ban.conf | sudo tee /etc/fail2
 sed 's/\(^[a-z tab]\)/# \1/' /etc/fail2ban/jail.conf | sudo tee /etc/fail2ban/jail.local &> /dev/null
 
 # Allow SSH
+apt-get -y install ufw
 ufw allow ssh
 ufw default allow outgoing
 ufw default deny incoming
