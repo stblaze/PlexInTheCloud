@@ -25,6 +25,12 @@ pip install lxml cryptography pyopenssl
 #######################
 git clone https://github.com/CouchPotato/CouchPotatoServer.git /opt/couchpotato/
 
+# Run it for the first time so it creates the default config file
+su $username <<EOF
+cd /home/$username
+timeout 5s python /opt/couchpotato/CouchPotato.py
+EOF
+
 #######################
 # Configure
 #######################
@@ -41,15 +47,36 @@ sed -i "s/^nzbToCouchPotato.py:cpsapikey=.*/nzbToCouchPotato.py:cpsapikey=$cpAPI
 ## Configure CouchPotato
 ### CouchPotato stores our passwords as md5sum hashes...heh heh heh
 cppassword=$(echo -n $passwd | md5sum | cut -d ' ' -f 1)
-sed -i "s/^username =.*/username = $username/g" /home/$username/.couchpotato/settings.conf
-sed -i "s/^password =.*/password = $cppassword/g" /home/$username/.couchpotato/settings.conf
+sed -i "/\[core\]/,/^$/ s/username = .*/username = $username/" /home/$username/.couchpotato/settings.conf
+sed -i "/\[core\]/,/^$/ s/password = .*/password = $cppassword/" /home/$username/.couchpotato/settings.conf
+
+### blackhole
+sed -i '/\[blackhole\]/,/^$/ s/enabled = .*/enabled = 0/' /home/$username/.couchpotato/settings.conf
 
 ### nzbget
-sed -i "s/^username = nzbget/username = $username/g" /home/$username/.couchpotato/settings.conf
-sed -i "s/^category = Movies/category = movies/g" /home/$username/.couchpotato/settings.conf
+sed -i '/\[nzbget\]/,/^$/ s/enabled = .*/enabled = 1/' /home/$username/.couchpotato/settings.conf
+sed -i "/\[nzbget\]/,/^$/ s/password = .*/password = $passwd/" /home/$username/.couchpotato/settings.conf
+sed -i "/\[nzbget\]/,/^$/ s/username = .*/username = $username/" /home/$username/.couchpotato/settings.conf
+sed -i "/\[nzbget\]/,/^$/ s/category = .*/category = movies/" /home/$username/.couchpotato/settings.conf
 
-perl -i -0pe "s/username = nzbget\ncategory = Movies\ndelete_failed = True\nmanual = 0\nenabled = 0\npriority = 0\nssl = 0/username = $username\ncategory = movies\ndelete_failed = True\nmanual = 0\nenabled = 1\npriority = 0\n ssl = 0/" /home/$username/.couchpotato/settings.conf
-perl -i -0pe "s/6789\npassword =/6789\npassword = $cppasswd\n/" /home/$username/.couchpotato/settings.conf
+### nzb
+sed -i "s/^retention =.*/retention = $nsRetention/g" /home/$username/.couchpotato/settings.conf
+
+### subtitles
+sed -i '/\[subtitle\]/,/^$/ s/languages = .*/languages = en/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[subtitle\]/,/^$/ s/force = .*/force = False/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[subtitle\]/,/^$/ s/enabled = .*/enabled = 1/' /home/$username/.couchpotato/settings.conf
+
+### renamer
+sed -i '/\[renamer\]/,/^$/ s/enabled = .*/enabled = 1/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[renamer\]/,/^$/ s/file_name = .*/file_name = <thename>-<year>.<ext>/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[renamer\]/,/^$/ s/next_on_failed = .*/next_on_failed = 0/' /home/$username/.couchpotato/settings.conf
+sed -i "/\[renamer\]/,/^$/ s|from = .*|from = /home/$username/nzbget/completed/movies|" /home/$username/.couchpotato/settings.conf
+sed -i "/\[renamer\]/,/^$/ s|to = .*|to = /home/$username/$local/movies|" /home/$username/.couchpotato/settings.conf
+sed -i '/\[renamer\]/,/^$/ s/cleanup = .*/cleanup = 1/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[renamer\]/,/^$/ s/unrar_modify_date = .*/unrar_modify_date = 1/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[renamer\]/,/^$/ s/run_every = .*/run_every = 0/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[renamer\]/,/^$/ s/force_every = .*/force_every = 24/' /home/$username/.couchpotato/settings.conf
 
 ## Post Processing
 ## NZBget
@@ -68,8 +95,36 @@ sed -i "s|^nzbToCouchPotato.py:cpswatch_dir=.*|nzbToCouchPotato.py:cpswatch_dir=
 #######################
 # Structure
 #######################
-mkdir /home/$username/nzbget/completed/movies
+# Create our local directory
 mkdir /home/$username/$local/movies
+
+# Create our directory for completed downloads
+mkdir /home/$username/nzbget/completed/movies
+
+# Create our ACD directory
+## Run the commands as our user since the rclone config is stored in the user's home directory and root can't access it.
+su $username <<EOF
+cd /home/$username
+rclone mkdir $encrypted:movies
+EOF
+
+# Create our Plex library
+# Must be done manually for now
+echo ''
+echo ''
+echo 'Now you need to create your Plex TV Library.'
+echo '1) In a browser open https://app.plex.tv/web/app'
+echo '2) In the left hand side, click on "Add Library"'
+echo '3) Select "Movies", leave the default name, and choose your preferred language before clicking "Next"'
+echo "4) Click 'Browse for media folder' and navigate to /home/$username/$encrypted/movies"
+echo '5) Click on the "Add" button and then click on "Add library"'
+echo ''
+
+# Create a Plex Token
+token=$(curl -H "Content-Length: 0" -H "X-Plex-Client-Identifier: PlexInTheCloud" -u "${plexUsername}":"${plexPassword}" -X POST https://my.plexapp.com/users/sign_in.xml | cut -d "\"" -s -f22 | tr -d '\n')
+
+# Grab the Plex Section ID of our new library
+movieID=$(curl -H "X-Plex-Token: ${token}" http://127.0.0.1:32400/library/sections | grep "movie" | grep "title=" | awk -F = '{print $6" "$7" "$8}' | sed 's/ art//g' | sed 's/title//g' | sed 's/type//g' | awk -F \" '{print "Section=\""$6"\" ID="$2}' | cut -d '"' -f2)
 
 #######################
 # Helper Scripts
@@ -89,7 +144,7 @@ sleep 10s
 rclone move -c /home/$username/$local/movies $encrypted:movies
 
 # Tell Plex to update the Library
-#wget http://localhost:32400/library/sections/3/refresh?X-Plex-Token=$plexToken
+wget http://localhost:32400/library/sections/$movieID/refresh?X-Plex-Token=$token
 
 # Send PP Success code
 exit 93
