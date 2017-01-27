@@ -71,7 +71,7 @@ sed -i "s/^Server1.Retention=.*/Server1.Retention=$nsRetention/g" /opt/nzbget/nz
 
 ## SECURITY
 sed -i "s/^ControlUsername=.*/ControlUsername=$username/g" /opt/nzbget/nzbget.conf
-sed -i "s/^ControlPassword=.*/ControlPassword=$passwd/g" /opt/nzbget/nzbget.conf
+sed -i "s/^ControlPassword=.*/ControlPassword=\"$passwd\"/g" /opt/nzbget/nzbget.conf
 sed -i "s/^DaemonUsername=.*/DaemonUsername=$username/g" /opt/nzbget/nzbget.conf
 
 ## DOWNLOAD QUEUE
