@@ -17,11 +17,15 @@ fi
 # Dependencies
 #######################
 apt-get install python-cherrypy
+pip install tzlocal
 
 #######################
 # Install
 #######################
 git clone https://github.com/evilhero/mylar /opt/mylar/
+
+# Run it for the first time so it creates the default config file
+timeout 5s python /opt/mylar/Mylar.py
 
 #######################
 # Configure
@@ -30,7 +34,7 @@ sed -i "s/^http_username =.*/http_username = $username/g" /opt/mylar/config.ini
 sed -i "s/^http_password =.*/http_password = $passwd/g" /opt/mylar/config.ini
 sed -i "s/^comicvine_api =.*/comicvine_api = $comicvineAPI/g" /opt/mylar/config.ini
 sed -i "s/^annuals_on =.*/annuals_on = 1/g" /opt/mylar/config.ini
-sed -i "s/^destination_dir =.*/destination_dir = /home/$username/$local/comics/g" /opt/mylar/config.ini
+sed -i "s|^destination_dir =.*|destination_dir = /home/$username/$local/comics|g" /opt/mylar/config.ini
 sed -i "s/^create_folders =.*/create_folders = 1/g" /opt/mylar/config.ini
 sed -i "s/^enforce_perms =.*/enforce_perms = 1/g" /opt/mylar/config.ini
 sed -i "s/^chmod_dir =.*/chmod_dir = 0775/g" /opt/mylar/config.ini
@@ -39,7 +43,7 @@ sed -i "s/^chowner =.*/chowner = $username/g" /opt/mylar/config.ini
 sed -i "s/^chgroup =.*/chgroup = $username/g" /opt/mylar/config.ini
 sed -i "s/^usenet_retention =.*/usenet_retention = $nsRetention/g" /opt/mylar/config.ini
 sed -i "s/^nzb_startup_search =.*/nzb_startup_search = 1/g" /opt/mylar/config.ini
-sed -i "s/^comic_dir =.*/comic_dir = /home/$username/$encrypted/comics/g" /opt/mylar/config.ini
+sed -i "s|^comic_dir =.*|comic_dir = /home/$username/$encrypted/comics|g" /opt/mylar/config.ini
 sed -i "s/^dupeconstraint =.*/dupeconstraint = filetype-cbz/g" /opt/mylar/config.ini
 sed -i "s/^autowant_all =.*/autowant_all = 1/g" /opt/mylar/config.ini
 sed -i "s/^autowant_upcoming =.*/autowant_upcoming = 1/g" /opt/mylar/config.ini
@@ -59,6 +63,15 @@ sed -i "s/^ct_tag_cbl =.*/ct_tag_cbl = 1/g" /opt/mylar/config.ini
 sed -i "s/^ct_cbz_overwrite =.*/ct_cbz_overwrite = 1/g" /opt/mylar/config.ini
 sed -i "s/^failed_download_handling =.*/failed_download_handling = 1/g" /opt/mylar/config.ini
 sed -i "s/^failed_auto =.*/failed_auto = 1/g" /opt/mylar/config.ini
+sed -i "s/^nzb_downloader =.*/nzb_downloader = 1/g" /opt/mylar/config.ini
+
+sed -i "/\[NZBGet\]/,/^$/ s/nzbget_host = .*/nzbget_host = localhost/" /opt/mylar/config.ini
+sed -i "/\[NZBGet\]/,/^$/ s/nzbget_port = .*/nzbget_port = 6789/" /opt/mylar/config.ini
+sed -i "/\[NZBGet\]/,/^$/ s/nzbget_username = .*/nzbget_username = $username/" /opt/mylar/config.ini
+sed -i "/\[NZBGet\]/,/^$/ s/nzbget_password = .*/nzbget_password = $passwd/" /opt/mylar/config.ini
+sed -i "/\[NZBGet\]/,/^$/ s/nzbget_category = .*/nzbget_category = comics/" /opt/mylar/config.ini
+sed -i "/\[NZBGet\]/,/^$/ s|nzbget_directory = .*|nzbget_directory = /home/$username/nzbget/completed/comics|" /home/$username/.couchpotato/settings.conf
+
 
 ## Post Processing
 ## NZBget
@@ -76,8 +89,18 @@ sed -i "s|^nzbToMylar.py:mywatch_dir=.*|nzbToMylar.py:mywatch_dir=/home/$usernam
 #######################
 # Structure
 #######################
-mkdir -p /home/$username/$local/comics
-mkdir -p /home/$username/nzbget/completed/comics
+# Create our local directory
+mkdir /home/$username/$local/comics
+
+# Create our directory for completed downloads
+mkdir /home/$username/nzbget/completed/comics
+
+# Create our ACD directory
+## Run the commands as our user since the rclone config is stored in the user's home directory and root can't access it.
+su $username <<EOF
+cd /home/$username
+rclone mkdir $encrypted:comics
+EOF
 
 #######################
 # Helper Scripts
@@ -95,9 +118,6 @@ sleep 10s
 
 # Upload
 rclone move -c /home/$username/$local/comics $encrypted:comics
-
-# Tell Plex to update the Library
-#wget http://localhost:32400/library/sections/3/refresh?X-Plex-Token=$plexToken
 
 # Send PP Success code
 exit 93
@@ -124,8 +144,10 @@ EOF
 #######################
 # Permissions
 #######################
-chown -R $username:$username /opt/sickrage
+chown -R $username:$username /opt/mylar
 chmod +x /home/$username/nzbget/scripts/uploadComics.sh
+chown -R $username:$username /home/$username/$local/comics
+chown -R $username:$username /home/$username/nzbget/completed/comics
 
 #######################
 # Autostart
