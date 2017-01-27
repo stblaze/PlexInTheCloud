@@ -72,7 +72,7 @@ echo ''
 echo "Would you like us to open the port in UFW?"
 select yn in "Yes" "No"; do
     case $yn in
-        Yes ) ufw allow 2202; echo ''; echo "Port 2202 open, Ubooquity is now available over the internet."; echo ''; break;;
+        Yes ) ufw allow 2202; echo ''; echo "Port 2202 open, Ubooquity is now available over the internet at $ipaddr:2202/admin."; echo ''; break;;
         No ) echo "Port 2202 left closed. You can still access it on your local machine by issuing the following command: ssh $username@$ipaddr -L 2202:localhost:2202"; echo "and then open localhost:2202 on your browser."; exit;;
     esac
 done
