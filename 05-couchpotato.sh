@@ -70,13 +70,18 @@ sed -i '/\[subtitle\]/,/^$/ s/enabled = .*/enabled = 1/' /home/$username/.couchp
 ### renamer
 sed -i '/\[renamer\]/,/^$/ s/enabled = .*/enabled = 1/' /home/$username/.couchpotato/settings.conf
 sed -i '/\[renamer\]/,/^$/ s/file_name = .*/file_name = <thename>-<year>.<ext>/' /home/$username/.couchpotato/settings.conf
-sed -i '/\[renamer\]/,/^$/ s/next_on_failed = .*/next_on_failed = 0/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[renamer\]/,/^$/ s/next_on_failed = .*/next_on_failed = 1/' /home/$username/.couchpotato/settings.conf
 sed -i "/\[renamer\]/,/^$/ s|from = .*|from = /home/$username/nzbget/completed/movies|" /home/$username/.couchpotato/settings.conf
 sed -i "/\[renamer\]/,/^$/ s|to = .*|to = /home/$username/$local/movies|" /home/$username/.couchpotato/settings.conf
 sed -i '/\[renamer\]/,/^$/ s/cleanup = .*/cleanup = 1/' /home/$username/.couchpotato/settings.conf
 sed -i '/\[renamer\]/,/^$/ s/unrar_modify_date = .*/unrar_modify_date = 1/' /home/$username/.couchpotato/settings.conf
 sed -i '/\[renamer\]/,/^$/ s/run_every = .*/run_every = 0/' /home/$username/.couchpotato/settings.conf
 sed -i '/\[renamer\]/,/^$/ s/force_every = .*/force_every = 24/' /home/$username/.couchpotato/settings.conf
+
+### misc
+sed -i '/\[kickasstorrents\]/,/^$/ s/enabled = .*/enabled = False/' /home/$username/.couchpotato/settings.conf
+sed -i '/\[torrentz\]/,/^$/ s/enabled = .*/enabled = False/' /home/$username/.couchpotato/settings.conf
+
 
 ## Post Processing
 ## NZBget
