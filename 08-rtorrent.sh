@@ -45,11 +45,19 @@ max_peers_seed = 5000
 # Maximum number of simultaneous uploads per torrent.
 max_uploads = 30
 
+# Global upload and download rate in KiB. "0" for unlimited.
+download_rate = 0
+upload_rate = 0
+
 # Default directory to save the downloaded torrents.
-directory = /home/$username/rutorrent
+directory = /home/$username/rutorrent/torrent/download
 
 # Session folder used by rtorrent to store current data
 session = /home/$username/rtorrent/session
+session.use_lock.set = yes
+
+# Run the rtorrent process as a daemon in the background
+#system.daemon.set = true
 
 # Stop torrents when diskspace is low.
 schedule = low_diskspace,5,60,close_low_diskspace=1024M
@@ -67,7 +75,8 @@ check_hash = yes
 use_udp_trackers = yes
 
 # Allow encrypted connection and retry with encryption if it fails.
-encryption = allow_incoming,enable_retry,prefer_plaintext
+#encryption = allow_incoming,enable_retry,prefer_plaintext
+encryption = allow_incoming,try_outgoing,enable_retry
 
 # Disabled DHT and peer exchange. (You can remove this if you're only using public trackers)
 dht = disable  
@@ -75,13 +84,14 @@ peer_exchange = no
 
 # Finally, the SCGI port rtorrent will be listening on, for communication via ruTorrent
 scgi_port = 127.0.0.1:5040
+#execute2 = {sh,-c,/usr/bin/php /var/www/rutorrent/php/initplugins.php $username &}
 EOF
 
 #######################
 # Structure
 #######################
 mkdir -p /home/$username/rtorrent/session
-mkdir -p /home/$username/rtorrent/watch
+mkdir -p /home/$username/rtorrent/torrent/{complete/{movie/couchpotato,music,tv/sonarr,game,book,software,other},download/{movie/couchpotato,music,tv/sonarr,game,book,software,other},watch/{movie/couchpotato,music,tv/sonarr,game,book,software,other}} Media/{Movies,'TV Shows'}
 
 #######################
 # Systemd Service File
@@ -106,7 +116,9 @@ EOF
 #######################
 # Permissions
 #######################
-chown -R /home/$username/rtorrent
+chown -R $username:$username /home/$username/rtorrent
+chown $username:$username /home/$username/.rtorrent.rc
+chmod -R 0755 /home/$username/rtorrent
 
 #######################
 # Remote Access

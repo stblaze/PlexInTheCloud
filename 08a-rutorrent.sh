@@ -35,7 +35,7 @@ server {
   root /var/www/rutorrent;
   index index.php index.html;
 
-  server_name _;
+  server_name localhost;
 
   location /RPC2 {
     scgi_pass   127.0.0.1:5040;
@@ -72,8 +72,18 @@ git clone https://github.com/Novik/ruTorrent.git /var/www/rutorrent
 #######################
 sed -i 's/$scgi_port =.*/$scgi_port = 5040;/g' /var/www/rutorrent/conf/config.php
 sed -i 's/$scgi_host =.*/$scgi_host = "127.0.0.1";/g' /var/www/rutorrent/conf/config.php
+sed -i 's/$saveUploadedTorrents = .*/$saveUploadedTorrents = false;/g' /var/www/rutorrent/conf/config.php
+sed -i "s|\$topDirectory = .*|\$topDirectory = '/home/$username/rtorrent/torrent/';|g" /var/www/rutorrent/conf/config.php
+sed -i 's/$profileMask = .*/$profileMask = 0775;/g' /var/www/rutorrent/conf/config.php
+
+sed -i "s|^.*\"curl\".*|                \"curl\"  => '/usr/bin/curl',|g" /var/www/rutorrent/conf/config.php
+
+sed -i 's/$autowatch_interval = .*/$autowatch_interval = 60;/g' /var/www/rutorrent/plugins/autotools/conf.php
+sed -i "s/\$fm['mkdperm'] = .*/\$fm['mkdperm'] = 775;/g" /var/www/rutorrent/plugins/filemanager/conf.php
 
 htpasswd -b -c /var/www/rutorrent/.htpasswd $username $passwd
+sed -i "s/^AuthName .*/AuthName \"$username\"/g" /var/www/rutorrent/.htaccess
+sed -i 's|^AuthUserFile .*|AuthUserFile "/var/www/rutorrent/.htpasswd"|g' /var/www/rutorrent/.htaccess
 
 #######################
 # Structure
@@ -81,28 +91,19 @@ htpasswd -b -c /var/www/rutorrent/.htpasswd $username $passwd
 mkdir -p /home/$username/rutorrent/
 
 #######################
-# Helper Scripts
-#######################
-
-#######################
-# Systemd Service File
-#######################
-
-#######################
 # Permissions
 #######################
 chown -R $username:$username /home/$username/rutorrent
 chown -R :www-data /var/www/rutorrent
-chown :www-data /var/www/rutorrent/.htpasswd
+chown :root /var/www/rutorrent/.htpasswd
 chmod -R 774 /var/www/rutorrent
-chmod 770 /var/www/rutorrent/.htpasswd
+chmod 644 /var/www/rutorrent/.htpasswd
 
 #######################
 # Autostart
 #######################
 systemctl daemon-reload
 systemctl enable nginx
-
 
 #######################
 # Remote Access
@@ -116,7 +117,7 @@ echo "Would you like us to open the port in UFW?"
 select yn in "Yes" "No"; do
     case $yn in
         Yes ) ufw allow 6060; echo ''; echo "Port 6060 open, ruTorrent is now available over the internet."; echo ''; break;;
-        No ) echo "Port 6060 left closed. You can still access it from your local machine by issuing the following command: ssh $username@$ipaddr -L 6060:localhost:6060"; echo "and then open localhost:6060 on your browser."; exit;;
+        No ) echo "Port 6060 left closed. You can still access it from your local machine by issuing the following command: ssh $username@$ipaddr -L 6060:localhost:6060"; echo "and then open localhost:6060 on your browser."; break;;
     esac
 done
 
@@ -124,3 +125,14 @@ done
 # Misc.
 #######################
 adduser $username www-data
+
+echo ''
+echo "We need to reboot the machine now."
+echo ''
+echo "Are you ready to reboot?"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes ) echo ''; echo "Rebooting Now."; echo ''; reboot -h now; break;;
+        No ) echo "Ok, but you'll need to reboot before rutorrent will function properly."; exit;;
+    esac
+done
