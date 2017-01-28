@@ -41,4 +41,4 @@ nsRetention="1000"
 comicvineAPI=""
 
 # rTorrent/ruTorrent
-torrentPort=""
+torrentPort="61347"
