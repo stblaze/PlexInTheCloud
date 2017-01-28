@@ -72,9 +72,16 @@ git clone https://github.com/Novik/ruTorrent.git /var/www/rutorrent
 #######################
 sed -i 's/$scgi_port =.*/$scgi_port = 5040;/g' /var/www/rutorrent/conf/config.php
 sed -i 's/$scgi_host =.*/$scgi_host = "127.0.0.1";/g' /var/www/rutorrent/conf/config.php
+sed -i 's/$saveUploadedTorrents = .*/$saveUploadedTorrents = false;/g' /var/www/rutorrent/conf/config.php
+sed -i "s|\$topDirectory = .*|\$topDirectory = '/home/$username/rtorrent/torrent/';|g" /var/www/rutorrent/conf/config.php
+sed -i 's/$profileMask = .*/$profileMask = 0775;/g' /var/www/rutorrent/conf/config.php
+
+sed -i "s|^.*\"curl\".*|                \"curl\"  => '/usr/bin/curl',|g" /var/www/rutorrent/conf/config.php
+
+sed -i 's/$autowatch_interval = .*/$autowatch_interval = 60;/g' /var/www/rutorrent/plugins/autotools/conf.php
+sed -i "s/\$fm['mkdperm'] = .*/\$fm['mkdperm'] = 775;/g" /var/www/rutorrent/plugins/filemanager/conf.php
 
 htpasswd -b -c /var/www/rutorrent/.htpasswd $username $passwd
-
 sed -i "s/^AuthName .*/AuthName \"$username\"/g" /var/www/rutorrent/.htaccess
 sed -i 's|^AuthUserFile .*|AuthUserFile "/var/www/rutorrent/.htpasswd"|g' /var/www/rutorrent/.htaccess
 
