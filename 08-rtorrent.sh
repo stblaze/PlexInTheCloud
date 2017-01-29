@@ -50,7 +50,7 @@ download_rate = 0
 upload_rate = 0
 
 # Default directory to save the downloaded torrents.
-directory = /home/$username/rutorrent/torrent/download
+directory = /home/$username/rutorrent/downloads
 
 # Session folder used by rtorrent to store current data
 session = /home/$username/rtorrent/session
@@ -91,7 +91,9 @@ EOF
 # Structure
 #######################
 mkdir -p /home/$username/rtorrent/session
-mkdir -p /home/$username/rtorrent/torrent/{complete/{movie/couchpotato,music,tv/sonarr,game,book,software,other},download/{movie/couchpotato,music,tv/sonarr,game,book,software,other},watch/{movie/couchpotato,music,tv/sonarr,game,book,software,other}} Media/{Movies,'TV Shows'}
+mkdir -p /home/$username/rtorrent/downloads
+
+#mkdir -p /home/$username/rtorrent/torrent/{complete/{movie/couchpotato,music,tv/sonarr,game,book,software,other},download/{movie/couchpotato,music,tv/sonarr,game,book,software,other},watch/{movie/couchpotato,music,tv/sonarr,game,book,software,other}} Media/{Movies,'TV Shows'}
 
 #######################
 # Systemd Service File
