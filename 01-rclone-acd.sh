@@ -115,17 +115,11 @@ rclone mount \
     --read-only \
     --allow-non-empty \
     --dir-cache-time 1m \
-    --max-read-ahead 2G \
     --acd-templink-threshold 0\
-    --bwlimit 0 \
-    --checkers 32 \
-    --contimeout 15s \
-    --low-level-retries 1 \
+    --checkers 16 \
     --no-check-certificate \
     --quiet \
-    --retries 3 \
     --stats 0 \
-    --timeout 30s \
     $encrypted: /home/$username/$encrypted/ & 
 
 sleep 3s
