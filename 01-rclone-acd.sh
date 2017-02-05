@@ -18,7 +18,7 @@ fi
 #######################
 # Dependencies
 #######################
-apt-get install -y git unionfs-fuse unzip
+apt-get install -y git unionfs-fuse unzip curl
 
 #######################
 # Install
