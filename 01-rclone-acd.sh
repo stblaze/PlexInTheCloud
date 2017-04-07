@@ -23,7 +23,7 @@ apt-get install -y git unionfs-fuse unzip curl
 #######################
 # Install
 #######################
-curl -O http://downloads.rclone.org/rclone-current-linux-amd64.zip
+curl -O https://downloads.rclone.org/rclone-v1.36-linux-amd64.zip
 unzip rclone-current-linux-amd64.zip
 cd rclone-*-linux-amd64
 cp rclone /usr/sbin/
